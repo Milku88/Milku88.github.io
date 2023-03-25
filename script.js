@@ -1,15 +1,41 @@
-// Optional JavaScript code for form validation
+#container {
+	max-width: 500px;
+	margin: 0 auto;
+	padding: 20px;
+}
 
-const form = document.querySelector('form');
+h1 {
+	text-align: center;
+}
 
-form.addEventListener('submit', (event) => {
-	event.preventDefault();
-	const username = document.getElementById('username').value;
-	const tweet = document.getElementById('tweet').value;
+form {
+	display: flex;
+	flex-direction: column;
+}
 
-	if (username.trim() === '' || tweet.trim() === '') {
-		alert('Please fill in all fields.');
-	} else {
-		form.submit();
-	}
-});
+label {
+	margin-top: 10px;
+}
+
+input[type="text"],
+textarea {
+	padding: 10px;
+	margin-bottom: 20px;
+	border-radius: 5px;
+	border: 1px solid #ccc;
+	font-size: 16px;
+}
+
+input[type="submit"] {
+	background-color: #4CAF50;
+	color: white;
+	padding: 10px;
+	border: none;
+	border-radius: 5px;
+	font-size: 16px;
+	cursor: pointer;
+}
+
+input[type="submit"]:hover {
+	background-color: #3E8E41;
+}
