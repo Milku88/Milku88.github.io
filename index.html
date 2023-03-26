@@ -1,21 +1,201 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Milktter</title>
-	<link rel="stylesheet" type="text/css" href="style.css">
+  <title>Gra agar.io</title>
+  <style>
+    canvas {
+      border: 1px solid #d3d3d3;
+    }
+  </style>
 </head>
 <body>
-	<div id="container">
-		<h1>Milktter</h1>
-		<form action="submit_tweet.php" method="POST">
-			<label for="username">Username:</label>
-			<input type="text" name="username" id="username" required>
-			<label for="tweet">Tweet:</label>
-			<textarea name="tweet" id="tweet" required></textarea>
-			<input type="submit" value="Tweet">
-		</form>
-	</div>
+  <button id="startButton" style="position: absolute; left: 10px;">Rozpocznij grę</button>
+  <canvas id="gameCanvas" width="800" height="600"></canvas>
+  <div id="score">Wynik: 0</div>
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const player = {
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      radius: 10,
+      color: 'blue'
+    };
+    const bots = [];
+    const food = [];
+    let score = 0;
+    let gameStarted = false;
 
-	<script src="script.js"></script>
+    function spawnFood() {
+      food.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        radius: 3,
+        color: 'red'
+      });
+    }
+
+    function spawnBot() {
+      bots.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        radius: 5,
+        color: 'green'
+      });
+    }
+
+    function drawFood() {
+      for (let i = 0; i < food.length; i++) {
+        ctx.beginPath();
+        ctx.arc(food[i].x, food[i].y, food[i].radius, 0, Math.PI * 2);
+        ctx.fillStyle = food[i].color;
+        ctx.fill();
+      }
+    }
+
+    function drawBots() {
+      for (let i = 0; i < bots.length; i++) {
+        ctx.beginPath();
+        ctx.arc(bots[i].x, bots[i].y, bots[i].radius, 0, Math.PI * 2);
+        ctx.fillStyle = bots[i].color;
+        ctx.fill();
+      }
+    }
+
+    function playerMove(event) {
+      let mouseX = event.clientX - canvas.offsetLeft;
+      let mouseY = event.clientY - canvas.offsetTop;
+      player.x += (mouseX - player.x) * 0.05;
+      player.y += (mouseY - player.y) * 0.05;
+    }
+
+    function eatFood() {
+      for (let i = 0; i < food.length; i++) {
+        let dx = food[i].x - player.x;
+        let dy = food[i].y - player.y;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < player.radius + food[i].radius) {
+          player.radius += 1;
+          score++;
+          food.splice(i, 1);
+          i--;
+        }
+      }
+    }
+
+    function eatBots() {
+      for (let i = 0; i < bots.length; i++) {
+        let dx = bots[i].x - player.x;
+        let dy = bots[i].y - player.y;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < player.radius + bots[i].radius && player.radius > bots[i].radius) {
+          player.radius += 5;
+          score += 5;
+          bots.splice(i, 1);
+          i--;
+        } else if (distance < player.radius + bots[i].radius && player.radius < bots[i].radius) {
+          alert("Przegrałeś! Twój wynik to: " + score);
+          document.location.reload();
+        }
+      }
+    }
+
+    function botEatFood() {
+      for (let i = 0; i < bots.length; i++) {
+        for (let j = 0; j < food.length; j++) {
+          let dx = food[j].x - bots[i].x;
+          let dy = food[j].y - bots[i].y;
+          let distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance < bots[i].radius + food[j].radius) {
+            bots[i].radius += 1;
+            food.splice(j, 1);
+            j--;
+          }
+        }
+      }
+    }
+
+    function moveBots() {
+  for (let i = 0; i < bots.length; i++) {
+    bots[i].x += (Math.random() - 0.5) * 2;
+    bots[i].y += (Math.random() - 0.5) * 2;
+
+    // Bot collision detection
+    for (let j = 0; j < bots.length; j++) {
+      if (i !== j) {
+        let dx = bots[j].x - bots[i].x;
+        let dy = bots[j].y - bots[i].y;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < bots[i].radius + bots[j].radius) {
+          if (bots[i].radius > bots[j].radius) {
+            bots[i].radius += bots[j].radius;
+            bots.splice(j, 1);
+            j--;
+          } else {
+            bots[j].radius += bots[i].radius;
+            bots.splice(i, 1);
+            i--;
+            break;
+          }
+        }
+      }
+    }
+
+    // Bot and player collision detection
+    let dx = player.x - bots[i].x;
+    let dy = player.y - bots[i].y;
+    let distance = Math.sqrt(dx * dx + dy * dy);
+    if (distance < player.radius + bots[i].radius && player.radius > bots[i].radius) {
+      player.radius += bots[i].radius;
+      score += bots[i].radius;
+      bots.splice(i, 1);
+      i--;
+    } else if (distance < player.radius + bots[i].radius && player.radius < bots[i].radius) {
+      alert("Przegrałeś! Twój wynik to: " + score);
+      document.location.reload();
+    }
+  }
+}
+
+function draw() {
+  if (gameStarted) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    drawFood();
+    drawBots();
+    eatFood();
+    botEatFood();
+    eatBots();
+
+    if (score % 10 === 0 && score !== 0 && food.length < 50) {
+      spawnFood();
+    }
+
+    if (score % 20 === 0 && score !== 0 && bots.length < 10) {
+      spawnBot();
+    }
+
+    moveBots();
+
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+    ctx.fillStyle = player.color;
+    ctx.fill();
+
+    document.getElementById('score').innerHTML = "Wynik: " + score;
+
+    window.requestAnimationFrame(draw);
+  }
+}
+
+document.addEventListener('mousemove', playerMove);
+
+document.getElementById('startButton').addEventListener('click', function() {
+  gameStarted = true;
+  spawnFood();
+  spawnBot();
+  draw();
+});
+</script>
 </body>
 </html>
